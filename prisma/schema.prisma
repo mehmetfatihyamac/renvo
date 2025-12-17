@@ -1,0 +1,36 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Listing {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  pricePerDay Int
+  depositRate Float    @default(0.2)
+  delivery    String
+  city        String
+  ownerId     String
+  createdAt   DateTime @default(now())
+
+  orders      Order[]
+}
+
+model Order {
+  id            String   @id @default(cuid())
+  listingId     String
+  listing       Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  days          Int      @default(1)
+  renterEmail   String?
+  rentAmount    Int
+  depositAmount Int
+  totalAmount   Int
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+}
