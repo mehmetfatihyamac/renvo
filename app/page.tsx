@@ -16,7 +16,7 @@ export default function Home() {
         <div className="rounded-3xl border border-zinc-800 bg-zinc-900/40 p-8">
           <h1 className="text-4xl font-extrabold leading-tight md:text-6xl">
             Kirala. Kullan. Geri ver.
-            <span className="block text-zinc-300">Gaziantep’te elden veya kargo.</span>
+            <span className="block text-zinc-300">Türkiye'nin her yerinde elden veya kargo.</span>
           </h1>
           <p className="mt-4 max-w-2xl text-zinc-300">
             renvo ile ihtiyacın olan eşyayı bul, güvenli ödeme ile kirala.
@@ -34,7 +34,7 @@ export default function Home() {
             />
             <input
               className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-100 outline-none focus:border-zinc-500"
-              defaultValue="Gaziantep"
+              defaultValue=""
             />
             <a
               className="flex items-center justify-center rounded-xl bg-white px-4 py-3 font-bold text-zinc-950 hover:bg-zinc-200"

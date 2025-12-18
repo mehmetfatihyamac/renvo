@@ -27,7 +27,7 @@ export default async function KesfetPage() {
       <section className="mx-auto max-w-6xl px-6">
         <h1 className="text-2xl font-extrabold">Keşfet</h1>
         <p className="mt-1 text-zinc-300">
-          Gaziantep’te kiralanabilir eşyalar
+          Türkiye genelinde kiralanabilir eşyalar
         </p>
 
         <div className="mt-6 grid gap-4 md:grid-cols-3">
