@@ -1,52 +1,37 @@
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-// GET /api/listings
-export async function GET() {
+export async function GET(_req: Request, ctx: any) {
   try {
-    const listings = await prisma.listing.findMany({
-      orderBy: { createdAt: "desc" },
-    });
+    // 🔐 Next 16 / Turbopack uyumlu params okuma
+    const p = await Promise.resolve(ctx?.params);
+    const id = typeof p?.id === "string" ? p.id.trim() : "";
 
-    return NextResponse.json({ ok: true, listings });
-  } catch (error) {
-    return NextResponse.json(
-      { ok: false, error: "Listeler alınamadı" },
-      { status: 500 }
-    );
-  }
-}
-
-// POST /api/listings
-export async function POST(req: Request) {
-  try {
-    const body = await req.json();
-
-    const { title, description, pricePerDay, delivery, city } = body;
-
-    if (!title || !description || !pricePerDay) {
+    if (!id) {
       return NextResponse.json(
-        { ok: false, error: "Eksik alan" },
+        { ok: false, error: "id yok" },
         { status: 400 }
       );
     }
 
-    const listing = await prisma.listing.create({
-      data: {
-        title,
-        description,
-        pricePerDay: Number(pricePerDay),
-        depositRate: 0.2,
-        delivery: delivery || "Elden",
-        city: city || "Gaziantep",
-        ownerId: "demo-user",
-      },
+    const listing = await prisma.listing.findUnique({
+      where: { id },
     });
 
+    if (!listing) {
+      return NextResponse.json(
+        { ok: false, error: "İlan bulunamadı" },
+        { status: 404 }
+      );
+    }
+
     return NextResponse.json({ ok: true, listing });
-  } catch (error) {
+  } catch (e: any) {
+    console.error("LISTING_ROUTE_ERROR:", e);
     return NextResponse.json(
-      { ok: false, error: "İlan oluşturulamadı" },
+      { ok: false, error: String(e?.message ?? e) },
       { status: 500 }
     );
   }
