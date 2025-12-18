@@ -4,13 +4,14 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-// GET /api/listings -> ilanları getir
+// GET /api/listings  -> ilanları getir
 export async function GET() {
   try {
     const listings = await prisma.listing.findMany({
       orderBy: { createdAt: "desc" },
       take: 50,
     });
+
     return NextResponse.json(listings);
   } catch (err) {
     console.error("GET /api/listings error:", err);
@@ -21,27 +22,21 @@ export async function GET() {
 // POST /api/listings -> ilan oluştur
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => null);
+    const body = await req.json();
 
     const title = String(body?.title ?? "").trim();
     const description = String(body?.description ?? "").trim();
-
-    const pricePerDayRaw = body?.pricePerDay;
-    const pricePerDay = Number(pricePerDayRaw);
-
     const delivery = String(body?.delivery ?? "").trim();
     const city = String(body?.city ?? "").trim();
 
-    if (
-      !title ||
-      !description ||
-      !delivery ||
-      !city ||
-      !Number.isFinite(pricePerDay) ||
-      pricePerDay <= 0
-    ) {
+    // sayı parse
+    const pricePerDayRaw = body?.pricePerDay;
+    const pricePerDay = Number(pricePerDayRaw);
+
+    // Zorunlu kontroller
+    if (!title || !description || !delivery || !city || Number.isNaN(pricePerDay)) {
       return NextResponse.json(
-        { error: "Eksik/yanlış alan var (title/description/city/delivery/pricePerDay)" },
+        { error: "Eksik/yanlış alan var (title/description/pricePerDay/delivery/city)" },
         { status: 400 }
       );
     }
@@ -53,6 +48,7 @@ export async function POST(req: Request) {
         pricePerDay: Math.floor(pricePerDay),
         delivery,
         city,
+        // ✅ ownerId YOK -> eklemiyoruz
       },
     });
 
