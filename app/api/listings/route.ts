@@ -48,7 +48,7 @@ export async function POST(req: Request) {
         pricePerDay: Math.floor(pricePerDay),
         delivery,
         city,
-        // ✅ ownerId YOK -> eklemiyoruz
+        ownerId: null,
       },
     });
 
