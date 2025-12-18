@@ -7,32 +7,49 @@ export default function IlanVerPage() {
   const [description, setDescription] = useState("");
   const [pricePerDay, setPricePerDay] = useState<number>(0);
   const [delivery, setDelivery] = useState("Elden");
+  const [city, setCity] = useState("");
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
+  async function onSubmit() {
+    setMsg(null);
+
+    // min kontrol (backend zaten kontrol ediyor ama kullanıcıyı yormayalım)
+    if (!title.trim() || !description.trim() || !city.trim() || !delivery.trim() || pricePerDay <= 0) {
+      setMsg("Eksik alan var (Başlık/Açıklama/Şehir/Fiyat/Teslim)");
+      return;
+    }
+
     setLoading(true);
-
     try {
       const res = await fetch("/api/listings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, description, pricePerDay, delivery }),
+        body: JSON.stringify({
+          title,
+          description,
+          pricePerDay,
+          delivery,
+          city,
+        }),
       });
 
-      const data = await res.json();
+      const data = await res.json().catch(() => ({}));
 
-      if (!res.ok || !data?.ok) {
-        throw new Error(data?.error || "Bir hata oldu.");
+      if (!res.ok) {
+        setMsg(data?.error ?? "İlan oluşturulamadı");
+        return;
       }
 
-      // Başarılı: keşfet’e at
-      window.location.href = "/kesfet";
-    } catch (err: any) {
-      setError(String(err?.message ?? err));
+      setMsg("İlan oluşturuldu ✅");
+      setTitle("");
+      setDescription("");
+      setCity("");
+      setPricePerDay(0);
+      setDelivery("Elden");
+    } catch (e) {
+      setMsg("Sunucuya bağlanamadım (fetch hata)");
     } finally {
       setLoading(false);
     }
@@ -40,79 +57,77 @@ export default function IlanVerPage() {
 
   return (
     <main className="min-h-screen bg-zinc-950 text-zinc-50">
-      <header className="mx-auto flex max-w-6xl items-center justify-between px-6 py-6">
-        <a href="/" className="text-xl font-extrabold">renvo</a>
-        <a
-          href="/kesfet"
-          className="rounded-xl border border-zinc-700 px-3 py-2 text-sm hover:border-zinc-500"
-        >
-          ← Keşfet
-        </a>
-      </header>
+      <div className="mx-auto max-w-xl px-6 py-10">
+        <h1 className="text-3xl font-extrabold tracking-tight">İlan Ver</h1>
+        <p className="mt-2 text-zinc-300">Eşyanı kiraya ver, kazanmaya başla. Komisyon %20.</p>
 
-      <section className="mx-auto max-w-3xl px-6">
-        <h1 className="text-2xl font-extrabold">İlan Ver</h1>
-        <p className="mt-1 text-zinc-300">Eşyanı kiraya ver, kazanmaya başla. Komisyon %20.</p>
-
-        <form
-          onSubmit={onSubmit}
-          className="mt-6 grid gap-4 rounded-2xl border border-zinc-800 bg-zinc-900/30 p-6"
-        >
+        <div className="mt-8 space-y-4 rounded-2xl border border-zinc-800 bg-zinc-900/40 p-6">
           <input
-            className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-500"
-            placeholder="İlan başlığı (örn. Matkap)"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            placeholder="İlan başlığı (örn. Matkap)"
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none"
           />
 
           <textarea
-            className="min-h-[110px] rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-500"
-            placeholder="Açıklama"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            placeholder="Açıklama"
+            rows={4}
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none"
           />
 
           <input
-            type="number"
-            className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-500"
-            placeholder="Fiyat (₺ / gün)"
-            value={Number.isFinite(pricePerDay) ? pricePerDay : 0}
+            value={pricePerDay}
             onChange={(e) => setPricePerDay(Number(e.target.value))}
+            type="number"
             min={0}
+            placeholder="Günlük fiyat (₺)"
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none"
+          />
+
+          <input
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            placeholder="Şehir (örn. Gaziantep)"
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none"
           />
 
           <select
-            className="rounded-xl border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none focus:border-zinc-500"
             value={delivery}
             onChange={(e) => setDelivery(e.target.value)}
+            className="w-full rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 outline-none"
           >
             <option value="Elden">Teslim: Elden</option>
             <option value="Kargo">Teslim: Kargo</option>
-            <option value="Elden + Kargo">Teslim: Elden + Kargo</option>
+            <option value="Kurye">Teslim: Kurye</option>
           </select>
 
-          <div className="rounded-xl border border-zinc-800 p-4 text-sm text-zinc-300">
-            Depozito otomatik: <b>%20</b>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-950 px-4 py-3 text-zinc-300">
+            Depozito otomatik: %20
           </div>
 
-          {error && (
-            <div className="rounded-xl border border-red-900 bg-red-950/40 p-3 text-sm text-red-200">
-              {error}
+          {msg && (
+            <div
+              className={`rounded-lg border px-4 py-3 ${
+                msg.includes("✅")
+                  ? "border-emerald-700 bg-emerald-950/40 text-emerald-200"
+                  : "border-red-700 bg-red-950/40 text-red-200"
+              }`}
+            >
+              {msg}
             </div>
           )}
 
           <button
             disabled={loading}
-            className="rounded-xl bg-white py-3 font-bold text-zinc-950 hover:bg-zinc-200 disabled:opacity-60"
+            onClick={onSubmit}
+            className="w-full rounded-lg bg-zinc-50 px-4 py-3 font-semibold text-zinc-950 disabled:opacity-60"
           >
-            {loading ? "Yayınlanıyor..." : "İlanı Yayınla"}
+            {loading ? "Gönderiliyor..." : "İlanı Yayınla"}
           </button>
-        </form>
-      </section>
-
-      <footer className="mt-10 border-t border-zinc-900 py-8 text-center text-sm text-zinc-400">
-        © {new Date().getFullYear()} renvo
-      </footer>
+        </div>
+      </div>
     </main>
   );
 }

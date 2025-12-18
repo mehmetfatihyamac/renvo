@@ -1,38 +1,64 @@
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(_req: Request, ctx: any) {
-  try {
-    // 🔐 Next 16 / Turbopack uyumlu params okuma
-    const p = await Promise.resolve(ctx?.params);
-    const id = typeof p?.id === "string" ? p.id.trim() : "";
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-    if (!id) {
+// GET /api/listings -> ilanları getir
+export async function GET() {
+  try {
+    const listings = await prisma.listing.findMany({
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    return NextResponse.json(listings);
+  } catch (err) {
+    console.error("GET /api/listings error:", err);
+    return NextResponse.json({ error: "İlanlar alınamadı" }, { status: 500 });
+  }
+}
+
+// POST /api/listings -> ilan oluştur
+export async function POST(req: Request) {
+  try {
+    const body = await req.json().catch(() => null);
+
+    const title = String(body?.title ?? "").trim();
+    const description = String(body?.description ?? "").trim();
+
+    const pricePerDayRaw = body?.pricePerDay;
+    const pricePerDay = Number(pricePerDayRaw);
+
+    const delivery = String(body?.delivery ?? "").trim();
+    const city = String(body?.city ?? "").trim();
+
+    if (
+      !title ||
+      !description ||
+      !delivery ||
+      !city ||
+      !Number.isFinite(pricePerDay) ||
+      pricePerDay <= 0
+    ) {
       return NextResponse.json(
-        { ok: false, error: "id yok" },
+        { error: "Eksik/yanlış alan var (title/description/city/delivery/pricePerDay)" },
         { status: 400 }
       );
     }
 
-    const listing = await prisma.listing.findUnique({
-      where: { id },
+    const listing = await prisma.listing.create({
+      data: {
+        title,
+        description,
+        pricePerDay: Math.floor(pricePerDay),
+        delivery,
+        city,
+      },
     });
 
-    if (!listing) {
-      return NextResponse.json(
-        { ok: false, error: "İlan bulunamadı" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ ok: true, listing });
-  } catch (e: any) {
-    console.error("LISTING_ROUTE_ERROR:", e);
-    return NextResponse.json(
-      { ok: false, error: String(e?.message ?? e) },
-      { status: 500 }
-    );
+    return NextResponse.json(listing, { status: 201 });
+  } catch (err) {
+    console.error("POST /api/listings error:", err);
+    return NextResponse.json({ error: "İlan oluşturulamadı" }, { status: 500 });
   }
 }
