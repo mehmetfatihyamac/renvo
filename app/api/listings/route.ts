@@ -57,4 +57,6 @@ export async function POST(req: Request) {
     console.error("POST /api/listings error:", err);
     return NextResponse.json({ error: "İlan oluşturulamadı" }, { status: 500 });
   }
-}
+}// test
+
+
